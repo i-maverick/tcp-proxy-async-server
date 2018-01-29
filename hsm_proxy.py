@@ -54,18 +54,23 @@ class HSMProxyServer:
             self.queue.put_nowait((writer, data))
 
 
-hsm_proxy = HSMProxyServer()
-loop = asyncio.get_event_loop()
-coro = asyncio.start_server(hsm_proxy.server, HSM_PROXY_HOST, HSM_PROXY_PORT, loop=loop)
-server = loop.run_until_complete(asyncio.gather(hsm_proxy.client(loop), coro))
+def main():
+    hsm_proxy = HSMProxyServer()
+    loop = asyncio.get_event_loop()
+    coro = asyncio.start_server(hsm_proxy.server, HSM_PROXY_HOST, HSM_PROXY_PORT, loop=loop)
+    server = loop.run_until_complete(asyncio.gather(hsm_proxy.client(loop), coro))
 
-# Serve requests until Ctrl+C is pressed
-print('Serving on {}'.format(server.sockets[0].getsockname()))
-try:
-    loop.run_forever()
-except KeyboardInterrupt:
-    pass
+    # Serve requests until Ctrl+C is pressed
+    print('Serving on {}'.format(server.sockets[0].getsockname()))
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
 
-server.close()
-loop.run_until_complete(server.wait_closed())
-loop.close()
+    server.close()
+    loop.run_until_complete(server.wait_closed())
+    loop.close()
+
+
+if __name__ == '__main__':
+    main()
