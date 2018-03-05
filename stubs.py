@@ -4,7 +4,7 @@ import sys
 
 HOST = '127.0.0.1'
 
-stubs = (
+tcp_stubs = (
     (1, 'ATM', 4001),
     (2, 'E-PG', 4002),
     (3, 'E-IB', 4003),
@@ -64,8 +64,8 @@ class MqStub(Stub):
         return response
 
 
-async def create_stubs(loop):
-    for s in stubs:
+async def create_tcp_stubs(loop):
+    for s in tcp_stubs:
         stub = TcpStub(s[1], s[2], loop)
         await stub.start()
 
@@ -74,7 +74,7 @@ def main():
     setup_logger()
 
     event_loop = asyncio.get_event_loop()
-    server = event_loop.run_until_complete(create_stubs(event_loop))
+    server = event_loop.run_until_complete(create_tcp_stubs(event_loop))
 
     try:
         event_loop.run_forever()
