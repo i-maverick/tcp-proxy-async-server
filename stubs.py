@@ -38,7 +38,7 @@ class Stub:
             if data:
                 self.log.debug('received {!r}'.format(data))
 
-                response = self.prepare_response(data)
+                response = await self.prepare_response(data)
 
                 writer.write(response)
                 await writer.drain()
