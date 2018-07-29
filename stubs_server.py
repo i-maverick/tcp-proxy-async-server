@@ -6,8 +6,7 @@ from stubs import Stub
 
 stub_data = (
     (1, 'WAY4', 3000),
-    (2, 'E-PG', 3001),
-    (3, 'E-IB', 3002),
+    (2, 'RSA', 3001),
 )
 
 
