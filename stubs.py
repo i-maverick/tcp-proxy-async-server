@@ -51,7 +51,6 @@ class Stub:
 
     @staticmethod
     async def prepare_response(data):
-        await asyncio.sleep(0.5)
         return data
 
     async def stop(self):
