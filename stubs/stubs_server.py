@@ -1,8 +1,8 @@
 import asyncio
 import logging
 import sys
-from stubs_api import Api
-from stubs import Stub
+from stubs.stubs_api import Api
+from stubs.stubs import Stub
 
 stub_data = (
     (1, 'WAY4', 3000),
