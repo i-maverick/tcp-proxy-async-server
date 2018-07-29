@@ -1,29 +1,14 @@
 import asyncio
 import logging
-import sys
+
 
 HOST = '127.0.0.1'
 READ_BUFFER = 2048
 
-stub_data = (
-    (1, 'WAY4', 3000),
-    (2, 'E-PG', 3001),
-    (3, 'E-IB', 3002),
-)
-
-
-def setup_logger():
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(name)s: %(message)s',
-        stream=sys.stdout,
-    )
-
 
 class Stub:
-    def __init__(self, name, port, loop):
-        self.name = name
-        self.port = port
+    def __init__(self, data, loop):
+        self.id, self.name, self.port = data
         self.loop = loop
 
         self.reader = None
@@ -31,7 +16,7 @@ class Stub:
 
         self.running = False
 
-        self.log = logging.getLogger(f'{name}_{port}')
+        self.log = logging.getLogger(f'{self.name}_{self.port}')
 
     def close(self, err):
         print(f'Closing connection: {err}')
@@ -69,18 +54,5 @@ class Stub:
         await asyncio.sleep(0.5)
         return data
 
-    def stop(self):
+    async def stop(self):
         self.running = False
-
-
-def create_stubs():
-    loop = asyncio.get_event_loop()
-    stubs = [Stub(s[1], s[2], loop) for s in stub_data]
-    tasks = [loop.create_task(stub.start()) for stub in stubs]
-    loop.run_until_complete(asyncio.wait(tasks))
-    loop.close()
-
-
-if __name__ == '__main__':
-    setup_logger()
-    create_stubs()
