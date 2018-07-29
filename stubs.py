@@ -3,11 +3,12 @@ import logging
 import sys
 
 HOST = '127.0.0.1'
+READ_BUFFER = 2048
 
-tcp_stubs = (
-    (1, 'ATM', 4001),
-    (2, 'E-PG', 4002),
-    (3, 'E-IB', 4003),
+stub_data = (
+    (1, 'WAY4', 3000),
+    (2, 'E-PG', 3001),
+    (3, 'E-IB', 3002),
 )
 
 
@@ -25,64 +26,61 @@ class Stub:
         self.port = port
         self.loop = loop
 
-        self.log = logging.getLogger('{}_{}'.format(self.name, port))
+        self.reader = None
+        self.writer = None
+
+        self.running = False
+
+        self.log = logging.getLogger(f'{name}_{port}')
+
+    def close(self, err):
+        print(f'Closing connection: {err}')
+        if self.writer:
+            self.writer.close()
+        self.running = False
 
     async def start(self):
-        await asyncio.start_server(self.handler, HOST, self.port, loop=self.loop)
-        self.log.debug('starting up')
+        self.log.debug(f'Starting stub {self.name}')
+        try:
+            self.reader, self.writer = await asyncio.open_connection(
+                host=HOST, port=self.port, loop=self.loop)
+            self.running = True
+            self.log.debug(f'Stub connected to port {self.port}')
+        except (asyncio.TimeoutError, ConnectionRefusedError) as err:
+            self.close(err)
+            return
 
-    async def handler(self, reader, writer):
-        self.log.debug('connection accepted')
-        while True:
-            data = await reader.read(1024)
-            if data:
-                self.log.debug('received {!r}'.format(data))
-
-                response = await self.prepare_response(data)
-
-                writer.write(response)
-                await writer.drain()
-                self.log.debug('sent {!r}'.format(response))
-            else:
-                self.log.debug('connection closing')
-                writer.close()
+        while self.running:
+            data = await self.reader.read(READ_BUFFER)
+            if not data:
+                self.close('no data')
                 return
 
-    async def prepare_response(self, data):
+            self.log.debug('received {!r}'.format(data))
+
+            response = await self.prepare_response(data)
+
+            self.writer.write(response)
+            await self.writer.drain()
+            self.log.debug('sent {!r}'.format(response))
+
+    @staticmethod
+    async def prepare_response(data):
+        await asyncio.sleep(0.5)
         return data
 
-
-class TcpStub(Stub):
-    async def prepare_response(self, data):
-        response = bytes(self.name, encoding='utf-8') + data
-        return response
+    def stop(self):
+        self.running = False
 
 
-class MqStub(Stub):
-    async def prepare_response(self, data):
-        response = bytes(self.name, encoding='utf-8') + data
-        return response
-
-
-async def create_tcp_stubs(loop):
-    for s in tcp_stubs:
-        stub = TcpStub(s[1], s[2], loop)
-        await stub.start()
-
-
-def main():
-    setup_logger()
-
-    event_loop = asyncio.get_event_loop()
-    server = event_loop.run_until_complete(create_tcp_stubs(event_loop))
-
-    try:
-        event_loop.run_forever()
-    finally:
-        server.close()
-        event_loop.run_until_complete(server.wait_closed())
-        event_loop.close()
+def create_stubs():
+    loop = asyncio.get_event_loop()
+    stubs = [Stub(s[1], s[2], loop) for s in stub_data]
+    tasks = [loop.create_task(stub.start()) for stub in stubs]
+    loop.run_until_complete(asyncio.wait(tasks))
+    loop.close()
 
 
 if __name__ == '__main__':
-    main()
+    setup_logger()
+    create_stubs()
