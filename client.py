@@ -2,8 +2,10 @@ import socket
 import time
 import random
 
+READ_BUFFER = 4096
+
 HSM_PROXY_HOST = '127.0.0.1'
-HSM_PROXY_PORT = 2222
+HSM_PROXY_PORT = 3000
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = (HSM_PROXY_HOST, HSM_PROXY_PORT)
@@ -18,8 +20,16 @@ for i in range(10):
     print('sending "{0}"'.format(message))
     sock.sendall(bytes(message, encoding='utf-8'))
 
-    data = sock.recv(4096)
+    data = sock.recv(READ_BUFFER)
     print('received "{0}"'.format(data.decode("utf-8")))
-# print('closing socket')
-# sock.close()
-time.sleep(10)
+
+    # time.sleep(random.randint(0, 10))
+
+# while True:
+#     data = sock.recv(READ_BUFFER)
+#     if data:
+#         print(data)
+
+print('closing socket')
+sock.close()
+# time.sleep(10)

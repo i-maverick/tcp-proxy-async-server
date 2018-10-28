@@ -1,32 +1,32 @@
 import asyncio
-import time
 
 READ_BUFFER = 4096
+
 HOST = '127.0.0.1'
-PORT = 2222
+PORT = 3000
 
 
-async def server():
-    # Start a socket server, call back for each client connected.
-    # The client_connected_handler coroutine will be automatically converted to a Task
-    await asyncio.start_server(client_handler, HOST, PORT)
+async def server(host, port):
+    await asyncio.start_server(client_handler, host, port)
+    print('HSM Server started...')
 
 
 async def client_handler(client_reader, client_writer):
     print("Connection received!")
-    while True:
-        data = await client_reader.read(READ_BUFFER)
-        if not data:
-            break
-        s = data.decode("utf-8")
-        print(s)
-        response = '{0} {1}'.format(s.split(' ')[0], 'Ok')
-        time.sleep(1)
-        client_writer.write(bytes(response, encoding='utf-8'))
-
+    try:
+        while True:
+            data = await client_reader.read(READ_BUFFER)
+            if not data:
+                break
+            s = data.decode("utf-8")
+            print(s)
+            response = '{0} {1}'.format(s.split(' ')[0], 'Ok')
+            client_writer.write(bytes(response, encoding='utf-8'))
+    except ConnectionResetError as er:
+        print(er)
 
 loop = asyncio.get_event_loop()
-loop.run_until_complete(server())
+loop.run_until_complete(server(HOST, PORT))
 try:
     loop.run_forever()
 finally:
